@@ -1,9 +1,10 @@
 var createError = require('http-errors');
 var express = require('express');
-var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-var bodyParser = require('body-parser')
 var Web3 = require('web3');
+
+const HOST = '0.0.0.0';
+const PORT = 4000;
 
 const providerUrl = 'https://kovan.infura.io/v3/6c6f87a10e12438f8fbb7fc7c762b37c';
 
@@ -13,12 +14,9 @@ var UserTransaction = require('./models/UserTransaction');
 
 var app = express();
 
-app.use(bodyParser.urlencoded({ extended: false }))
-app.use(bodyParser.json())
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
 
 //API to insert user transactions
 app.get('/user/transaction', function(req, res) {
@@ -52,16 +50,18 @@ app.get('/user/transaction', function(req, res) {
 
 //API to retrieve user transactions based on user address which the user has sent to
 app.get('/user/transactions', function(req, res) {
-  if(req.query.from) {
+  if('from' in req.query) {
     UserTransaction.find({from: req.query.from}, function(err, userTransactions) {
       if (err) res.json(err);
       res.json(userTransactions);
     });
-  } else if (req.query.to) {
+  } else if ('to' in req.query) {
     UserTransaction.find({to: req.query.to}, function(err, userTransactions) {
       if (err) res.json(err);
       res.json(userTransactions);
     });
+  } else {
+    res.json({message: 'No query params were provided from transaction'});
   }
 });
 
@@ -74,6 +74,10 @@ app.use(function(req, res, next) {
 app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.json(err);
+});
+
+app.listen(PORT, HOST, function(){
+  console.log(`Server started on ${HOST}:${PORT}`);
 });
 
 module.exports = app;
