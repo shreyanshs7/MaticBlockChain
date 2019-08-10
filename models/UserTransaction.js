@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-mongoose.connect('mongodb://127.0.0.1:27017/mydb', {useNewUrlParser: true});
+mongoose.connect('mongodb://abcd:abcd12345@ds161397.mlab.com:61397/matic', {useNewUrlParser: true});
 
 const Schema = mongoose.Schema;
 

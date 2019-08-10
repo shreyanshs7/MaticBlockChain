@@ -5,7 +5,7 @@ var logger = require('morgan');
 var bodyParser = require('body-parser')
 var Web3 = require('web3');
 
-const providerUrl = 'kovan.infura.io/v3/6c6f87a10e12438f8fbb7fc7c762b37c';
+const providerUrl = 'https://kovan.infura.io/v3/6c6f87a10e12438f8fbb7fc7c762b37c';
 
 var web3 = new Web3(new Web3.providers.HttpProvider(providerUrl));
 
@@ -21,16 +21,37 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 //API to insert user transactions
-app.post('/user/transaction', function(req, res) {
-  var userTransaction = new UserTransaction(req.body).save(function(err) {
-    if (err) res.json(err);
-    res.json(userTransaction);
+app.get('/user/transaction', function(req, res) {
+  var userData = [];
+  for (let index = 12681040; index > 12580040; index--) {
+    if(userData.length < 10000) {
+      web3.eth.getBlock(index, true).then(function(response) {
+        if(response.transactions.length > 0) {
+          response.transactions.forEach(element => {
+            var data = {
+              from: element.from,
+              to: element.to,
+              transactionHash: element.hash,
+              blockNumber: element.blockNumber
+            };
+            userData.push(data);
+          });
+        }
+      }).catch(function(err){
+        throw err;
+      });  
+    }
+  }
+  UserTransaction.insertMany(userData).then(function(transactions){
+    res.json({success: true, transactions: transactions});
+  }).catch(function(err){
+    throw err;
   });
+  res.json({success: true});
 });
 
 //API to retrieve user transactions based on user address which the user has sent to
 app.get('/user/transactions', function(req, res) {
-  console.log("AAAAAA ", req.query);
   if(req.query.from) {
     UserTransaction.find({from: req.query.from}, function(err, userTransactions) {
       if (err) res.json(err);
